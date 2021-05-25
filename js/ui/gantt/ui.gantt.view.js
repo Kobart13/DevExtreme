@@ -39,7 +39,8 @@ export class GanttView extends Widget {
             taskTooltipContentTemplate: this.option('taskTooltipContentTemplate'),
             taskProgressTooltipContentTemplate: this.option('taskProgressTooltipContentTemplate'),
             taskTimeTooltipContentTemplate: this.option('taskTimeTooltipContentTemplate'),
-            taskContentTemplate: this.option('taskContentTemplate')
+            taskContentTemplate: this.option('taskContentTemplate'),
+            sorting: this.option('sorting')
         });
         this._selectTask(this.option('selectedRowKey'));
         this.updateBarItemsState();
@@ -206,6 +207,10 @@ export class GanttView extends Widget {
             case 'taskContentTemplate':
                 this._ganttViewCore.setTaskContentTemplate(args.value);
                 break;
+            case 'sorting':
+                // this._update();
+                this._sort(args.value);
+                break;
             default:
                 super._optionChanged(args);
         }
@@ -222,7 +227,31 @@ export class GanttView extends Widget {
         return this.option('headerHeight');
     }
     getGanttTasksData() {
-        return this.option('tasks');
+        const tasks = this.option('tasks');
+        const sortingOptions = this.getSortingOptions();
+        if(sortingOptions?.order) {
+            // console.log('_sortOptions', this._sortOptions);
+            const clonedTasksArray = JSON.parse(JSON.stringify(tasks));
+            this._sortTasks(clonedTasksArray, sortingOptions);
+            return clonedTasksArray;
+        }
+        return tasks;
+    }
+    _sort(args) {
+        this._sortOptions = args;
+        this._update();
+    }
+    _sortTasks(tasks, sortOptions) {
+        if(sortOptions.order === 'asc') {
+            tasks.sort((a, b)=> (a[sortOptions.fieldName] > b[sortOptions.fieldName] ? 1 : -1));
+        }
+        if(sortOptions.order === 'desc') {
+            tasks.sort((a, b)=> (a[sortOptions.fieldName] > b[sortOptions.fieldName] ? -1 : 1));
+        }
+    }
+    getSortingOptions() {
+        // return this.option('sorting');
+        return this._sortOptions;
     }
     getGanttDependenciesData() {
         return this.option('dependencies');

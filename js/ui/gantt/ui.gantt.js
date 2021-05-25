@@ -106,7 +106,7 @@ class Gantt extends Widget {
             width: this.option('taskListWidth'),
             selection: { mode: this._getSelectionMode(this.option('allowSelection')) },
             selectedRowKeys: this._getArrayFromOneElement(this.option('selectedRowKey')),
-            sorting: { mode: 'none' },
+            sorting: { mode: 'single', showSortIndexes: true },
             scrolling: { showScrollbar: 'onHover', mode: 'virtual' },
             allowColumnResizing: true,
             autoExpandAll: true,
@@ -119,7 +119,8 @@ class Gantt extends Widget {
             onRowPrepared: (e) => { this._onTreeListRowPrepared(e); },
             onContextMenuPreparing: (e) => { this._onTreeListContextMenuPreparing(e); },
             onRowClick: (e) => { this._onTreeListRowClick(e); },
-            onRowDblClick: (e) => { this._onTreeListRowDblClick(e); }
+            onRowDblClick: (e) => { this._onTreeListRowDblClick(e); },
+            onOptionChanged: (e) => { this._onTreeListOptionChanged(e); }
         });
     }
     _renderSplitter() {
@@ -183,6 +184,27 @@ class Gantt extends Widget {
             onAdjustControl: () => { this._onAdjustControl(); }
         });
         this._fireContentReadyAction();
+    }
+
+    _onTreeListOptionChanged(e) {
+        if(e.fullName.includes('.sortOrder')) {
+            this.sort(e);
+        }
+    }
+
+    sort(e) {
+        setTimeout(() => {
+        // console.log('sort', e);
+            const columns = this._treeList.getVisibleColumns();
+            // console.log('columns', columns);
+            // const columnIndex = /\[([^)]*)\]/.exec(e.fullName)[1];
+            // const sortColumn = columns[columnIndex];
+            const sortColumn = columns.filter(c => c.sortIndex === 0)[0];
+            const sortOptions = { index: sortColumn?.visibleIndex, order: e.value, fieldName: sortColumn?.dataField };
+            // const sortOptions = { index: columnIndex, order: e.value, fieldName: sortColumn?.dataField || 'title' };
+            this._setGanttViewOption('sorting', sortOptions);
+
+        }, 100);
     }
 
     _onAdjustControl() {
@@ -546,6 +568,7 @@ class Gantt extends Widget {
                     }, 300);
                 }
                 this._raiseInsertedAction(optionName, data, insertedId);
+                this._refreshDataSource(GANTT_TASKS);
             });
         }
     }
